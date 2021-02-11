@@ -274,6 +274,9 @@ auth:
   ## Alternatively, you can put your JKS files under the files/jks directory
   ##
   # jksSecret:
+  # jksKeystoreSAN:
+  # jksTruststore:
+  # jksTruststoreSecret:
 
   ## Password to access the JKS files when they are password-protected.
   ##
