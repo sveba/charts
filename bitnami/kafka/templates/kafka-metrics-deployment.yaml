@@ -48,9 +48,13 @@ spec:
               {{- if (include "kafka.client.tlsEncryption" .) }}
               --tls.enabled \
               {{- if .Values.metrics.kafka.certificatesSecret }}
-              --tls.ca-file="/opt/bitnami/kafka-exporter/certs/ca-file" \
-              --tls.cert-file="/opt/bitnami/kafka-exporter/certs/cert-file" \
-              --tls.key-file="/opt/bitnami/kafka-exporter/certs/key-file" \
+              --tls.key-file="/opt/bitnami/kafka-exporter/certs/${TLS_KEY}" \
+              --tls.cert-file="/opt/bitnami/kafka-exporter/certs/${TLS_CERT}" \
+              {{- if .Values.metrics.kafka.tlsCaSecret }}
+              --tls.ca-file="/opt/bitnami/kafka-exporter/cacert/${TLS_CA_CERT}" \
+              {{- else}}
+              --tls.ca-file="/opt/bitnami/kafka-exporter/certs/${TLS_CA_CERT}" \
+              {{- end }}
               {{- end }}
               {{- end }}
               {{- range $key, $value := .Values.metrics.kafka.extraFlags }}
@@ -66,6 +70,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "kafka.jaasSecretName" . }}
                   key: client-passwords
+            - name: TLS_KEY
+              value: {{ .Values.metrics.kafka.tlsKey | quote }}
+            - name: TLS_CERT
+              value: {{ .Values.metrics.kafka.tlsCert | quote }}
+            - name: TLS_CA_CERT
+              value: {{ .Values.metrics.kafka.tlsCaCert | quote }}
           {{- end }}
           ports:
             - name: metrics
@@ -78,10 +88,23 @@ spec:
             - name: kafka-exporter-certificates
               mountPath: /opt/bitnami/kafka-exporter/certs/
               readOnly: true
+      {{- if .Values.metrics.kafka.tlsCaSecret }}
+          volumeMounts:
+            - name: kafka-exporter-ca-certificate
+              mountPath: /opt/bitnami/kafka-exporter/cacert/
+              readOnly: true
+      {{- end }}
       volumes:
         - name: kafka-exporter-certificates
           secret:
             secretName: {{ .Values.metrics.kafka.certificatesSecret }}
             defaultMode: 0440
+      {{- if .Values.metrics.kafka.tlsCaSecret }}
+      volumes:
+        - name: kafka-exporter-ca-certificate
+          secret:
+            secretName: {{ .Values.metrics.kafka.tlsCaSecret }}
+            defaultMode: 0440
+      {{- end }}      
       {{- end }}
 {{- end }}
